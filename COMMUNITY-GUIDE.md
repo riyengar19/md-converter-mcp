@@ -18,10 +18,10 @@ This MCP server takes a different approach: it extracts the text from the file *
 
 | Document | Pages | Tokens via MCP | Tokens via direct upload | Savings |
 |---|---|---|---|---|
-| Presentation PDF (HCLTech Portal Guide) | 12 | 1,399 | 19,399 | **93%** |
-| Dense technical doc (India Stock Advisor Guide) | 16 | 6,309 | 30,309 | **79%** |
-| Web page saved as PDF (Reddit post) | 6 | 1,593 | 10,593 | **85%** |
-| Medical report (LifeLabs, 3-page) | 3 | ~680 | ~5,200 | **87%** |
+| Sales enablement deck (12-page presentation PDF) | 12 | 1,399 | 19,399 | **93%** |
+| Dense technical user guide (16-page doc) | 16 | 6,309 | 30,309 | **79%** |
+| Web article saved as PDF (6 pages) | 6 | 1,593 | 10,593 | **85%** |
+| Medical report (3-page) | 3 | ~680 | ~5,200 | **87%** |
 
 The savings are largest for documents with lots of whitespace and sparse layout (presentations, reports with margins) because vision overhead is fixed at 1,500 tokens/page regardless of how little text is on the page.
 

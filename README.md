@@ -38,10 +38,10 @@ When you drop a PDF directly into Claude, each page is rendered as an image and 
 
 | Document | Pages | MCP tokens | Direct upload tokens | Reduction |
 |---|---|---|---|---|
-| HCLTech Portal Guide (presentation PDF) | 12 | 1,399 | 19,399 | 93% |
-| India Stock Advisor User Guide | 16 | 6,309 | 30,309 | 79% |
-| Reddit post (web-to-PDF) | 6 | 1,593 | 10,593 | 85% |
-| LifeLabs blood-work report | 3 | ~680 | ~5,200 | 87% |
+| Sales enablement deck (12-page presentation PDF) | 12 | 1,399 | 19,399 | 93% |
+| Technical user guide (16-page dense doc) | 16 | 6,309 | 30,309 | 79% |
+| Web article saved as PDF (6 pages) | 6 | 1,593 | 10,593 | 85% |
+| Medical report (3-page) | 3 | ~680 | ~5,200 | 87% |
 
 ---
 
