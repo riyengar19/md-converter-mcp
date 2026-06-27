@@ -1,0 +1,38 @@
+{
+  "name": "md-converter-mcp",
+  "version": "1.0.0",
+  "description": "Node.js MCP server that converts files and URLs to Markdown. Drop-in replacement for Microsoft markitdown-mcp — works on any Node ≥ 18, no Python required.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "markdown",
+    "markitdown",
+    "pdf",
+    "docx",
+    "pptx",
+    "xlsx",
+    "ocr",
+    "claude"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "adm-zip": "^0.5.16",
+    "cheerio": "^1.0.0",
+    "fast-xml-parser": "^4.5.0",
+    "mammoth": "^1.9.0",
+    "node-fetch": "^3.3.2",
+    "pdf-parse": "^1.1.1",
+    "tesseract.js": "^6.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.0"
+  }
+}
