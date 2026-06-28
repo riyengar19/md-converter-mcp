@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>md-converter-mcp · Token Savings Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #0f172a;
+      color: #fff;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 rgba(255,255,255,.05);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #10b981 0%, #0891b2 100%);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .header-title  { font-size: 15px; font-weight: 600; line-height: 1.2; }
+    .header-sub    { font-size: 12px; color: #64748b; margin-top: 1px; }
+    .header-right  { display: flex; align-items: center; gap: 14px; }
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #94a3b8;
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #10b981;
+    }
+    .dot.offline { background: #ef4444; animation: none; }
+    .dot.live    { animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px; border: 1px solid #334155;
+      background: #1e293b; color: #cbd5e1;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+    }
+    .btn:hover  { background: #334155; color: #f1f5f9; }
+    .btn:active { background: #475569; }
+    .btn svg    { flex-shrink: 0; }
+
+    /* ── Main layout ── */
+    .main { max-width: 1300px; margin: 0 auto; padding: 24px 28px 40px; }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 860px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .cards { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 22px 18px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .card-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .055em;
+      text-transform: uppercase; color: #64748b;
+    }
+    .card-value {
+      font-size: 30px; font-weight: 700; line-height: 1;
+      margin: 8px 0 6px; color: #0f172a;
+    }
+    .card-value.green { color: #059669; }
+    .card-value.blue  { color: #2563eb; }
+    .card-value.amber { color: #d97706; }
+    .card-sub { font-size: 11px; color: #94a3b8; }
+
+    /* ── Charts row ── */
+    .charts {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 22px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .chart-card h2 {
+      font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 16px;
+    }
+    .chart-wrap { position: relative; height: 210px; }
+
+    /* ── Table ── */
+    .table-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      overflow: hidden;
+    }
+    .table-head-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 22px 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .table-head-row h2 { font-size: 13px; font-weight: 600; color: #334155; }
+    .table-head-row span { font-size: 11px; color: #94a3b8; }
+
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    thead tr { background: #f8fafc; }
+    th {
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 10.5px; font-weight: 600; letter-spacing: .055em;
+      text-transform: uppercase; color: #64748b;
+      border-bottom: 1px solid #f1f5f9;
+      white-space: nowrap;
+    }
+    th.r, td.r { text-align: right; }
+    td {
+      padding: 11px 14px;
+      font-size: 12.5px; color: #334155;
+      border-bottom: 1px solid #f8fafc;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .filename-cell {
+      max-width: 200px;
+      overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; color: #475569;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 10.5px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .b-pdf  { background: #fef3c7; color: #92400e; }
+    .b-docx { background: #dbeafe; color: #1d4ed8; }
+    .b-pptx { background: #fce7f3; color: #9d174d; }
+    .b-xlsx,.b-xls { background: #d1fae5; color: #065f46; }
+    .b-url  { background: #ede9fe; color: #6d28d9; }
+    .b-png,.b-jpg,.b-jpeg,.b-webp,.b-tiff,.b-bmp { background: #ffedd5; color: #9a3412; }
+    .b-txt,.b-md { background: #e0f2fe; color: #0c4a6e; }
+    .b-def  { background: #f1f5f9; color: #475569; }
+
+    /* ── Reduction bar ── */
+    .bar-wrap { display: flex; align-items: center; gap: 7px; }
+    .bar-track {
+      flex: 1; min-width: 60px; height: 5px;
+      background: #f1f5f9; border-radius: 3px; overflow: hidden;
+    }
+    .bar-fill  { height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 3px; }
+    .bar-pct   { font-size: 11.5px; font-weight: 600; color: #059669; white-space: nowrap; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center; padding: 52px 24px;
+      color: #94a3b8;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty h3   { font-size: 15px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+    .empty p    { font-size: 13px; line-height: 1.65; max-width: 380px; margin: 0 auto; }
+    .empty code {
+      display: inline-block; background: #f1f5f9; color: #0f172a;
+      padding: 1px 7px; border-radius: 4px;
+      font-size: 12px; font-family: ui-monospace, monospace;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; font-size: 11px; color: #94a3b8;
+      margin-top: 14px; padding-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+      display: none;
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 8px; padding: 12px 18px;
+      color: #991b1b; font-size: 13px; margin-bottom: 16px;
+    }
+    .error-banner.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─────────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">M</div>
+    <div>
+      <div class="header-title">md-converter-mcp</div>
+      <div class="header-sub">Token Savings Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="dot live" id="status-dot"></div>
+      <span id="status-text">Connecting…</span>
+    </div>
+    <button class="btn" id="refresh-btn" onclick="loadData(true)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M23 4v6h-6M1 20v-6h6"/>
+        <path d="M3.5 9a9 9 0 0 1 14.8-3.3M20.5 15A9 9 0 0 1 5.7 18.3"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<!-- ─── Main ───────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Total Tokens Saved</div>
+      <div class="card-value green" id="c-saved">—</div>
+      <div class="card-sub">vs. direct file upload</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Conversions</div>
+      <div class="card-value blue" id="c-count">—</div>
+      <div class="card-sub">files processed via MCP</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Avg Reduction</div>
+      <div class="card-value" id="c-avg">—</div>
+      <div class="card-sub">per conversion</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Efficiency Multiplier</div>
+      <div class="card-value amber" id="c-ratio">—</div>
+      <div class="card-sub">direct ÷ MCP token ratio</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+    <div class="chart-card">
+      <h2>Cumulative Tokens Saved Over Time</h2>
+      <div class="chart-wrap"><canvas id="timeline-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Savings by File Type</h2>
+      <div class="chart-wrap"><canvas id="type-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Recent conversions table -->
+  <div class="table-card">
+    <div class="table-head-row">
+      <h2>Recent Conversions</h2>
+      <span id="table-sub">Last 20 entries</span>
+    </div>
+    <div class="table-scroll">
+      <div id="table-body"></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="footer" id="footer">Waiting for first data load…</div>
+
+<!-- ─── Script ─────────────────────────────────────────────────────────────── -->
+<script>
+  const API_URL = "http://localhost:3847/api/stats";
+  let timelineChart = null;
+  let typeChart     = null;
+
+  // ── Formatting helpers ────────────────────────────────────────────────────
+  function fmtShort(n) {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000)     return (n / 1_000).toFixed(1) + "k";
+    return n.toLocaleString();
+  }
+
+  function fmtFull(n) {
+    return (n || 0).toLocaleString();
+  }
+
+  function badgeCls(ft) {
+    const map = {
+      pdf:"b-pdf", docx:"b-docx", pptx:"b-pptx",
+      xlsx:"b-xlsx", xls:"b-xls", url:"b-url",
+      png:"b-png", jpg:"b-jpg", jpeg:"b-jpeg",
+      webp:"b-webp", tiff:"b-tiff", bmp:"b-bmp",
+      txt:"b-txt", md:"b-md",
+    };
+    return map[(ft||"").toLowerCase()] || "b-def";
+  }
+
+  // ── Cards ─────────────────────────────────────────────────────────────────
+  function renderCards(s) {
+    document.getElementById("c-saved").textContent = fmtShort(s.total_saved);
+    document.getElementById("c-count").textContent = (s.total_conversions || 0).toLocaleString();
+    document.getElementById("c-avg").textContent   = (s.avg_reduction || 0) + "%";
+    const ratio = s.total_mcp > 0
+      ? (s.total_direct / s.total_mcp).toFixed(1) + "×"
+      : "—";
+    document.getElementById("c-ratio").textContent = ratio;
+  }
+
+  // ── Timeline chart ────────────────────────────────────────────────────────
+  function renderTimeline(over_time) {
+    const canvas = document.getElementById("timeline-chart");
+    if (timelineChart) { timelineChart.destroy(); timelineChart = null; }
+
+    if (!over_time.length) {
+      canvas.parentElement.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:210px;color:#94a3b8;font-size:13px;">No data yet</div>`;
+      return;
+    }
+
+    timelineChart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: over_time.map(d => d.date),
+        datasets: [{
+          label: "Cumulative tokens saved",
+          data: over_time.map(d => d.cumulative_saved),
+          fill: true,
+          backgroundColor: "rgba(16,185,129,.08)",
+          borderColor: "#10b981",
+          borderWidth: 2,
+          pointRadius: over_time.length > 25 ? 0 : 3,
+          pointBackgroundColor: "#10b981",
+          tension: 0.45,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: ctx => " " + fmtFull(ctx.parsed.y) + " tokens saved" }
+        }},
+        scales: {
+          x: { grid: { color: "#f1f5f9" }, ticks: { font: { size: 10.5 }, color: "#94a3b8", maxTicksLimit: 8 } },
+          y: {
+            grid: { color: "#f1f5f9" },
+            beginAtZero: true,
+            ticks: { font: { size: 10.5 }, color: "#94a3b8", callback: v => fmtShort(v) }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Type chart ────────────────────────────────────────────────────────────
+  function renderTypeChart(by_type) {
+    const canvas = document.getElementById("type-chart");
+    if (typeChart) { typeChart.destroy(); typeChart = null; }
+
+    if (!by_type.length) {
+      canvas.parentElement.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:210px;color:#94a3b8;font-size:13px;">No data yet</div>`;
+      return;
+    }
+
+    const palette = ["#10b981","#3b82f6","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#14b8a6"];
+
+    typeChart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: by_type.map(t => t.file_type.toUpperCase()),
+        datasets: [{
+          data: by_type.map(t => t.total_saved),
+          backgroundColor: by_type.map((_, i) => palette[i % palette.length]),
+          borderRadius: 5,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: {
+            label: ctx => {
+              const t = by_type[ctx.dataIndex];
+              return ` ${fmtFull(ctx.parsed.x)} tokens saved (${t.conversions} file${t.conversions !== 1 ? "s" : ""})`;
+            }
+          }
+        }},
+        scales: {
+          x: {
+            grid: { color: "#f1f5f9" },
+            beginAtZero: true,
+            ticks: { font: { size: 10.5 }, color: "#94a3b8", callback: v => fmtShort(v) }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 12, weight: "600" }, color: "#334155" }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  function renderTable(recent, total) {
+    const el = document.getElementById("table-body");
+    document.getElementById("table-sub").textContent =
+      `Last ${recent.length} of ${total} entries`;
+
+    if (!recent.length) {
+      el.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">📄</div>
+          <h3>No conversions recorded yet</h3>
+          <p>
+            Ask Claude to convert a file using <code>convert_to_markdown</code>.<br>
+            Each conversion is logged here automatically.<br>
+            Dashboard refreshes every 30 seconds.
+          </p>
+        </div>`;
+      return;
+    }
+
+    const rows = recent.map(r => {
+      const name = (r.filename || "").length > 38
+        ? (r.filename || "").slice(0, 36) + "…"
+        : (r.filename || "—");
+      const when = r.ts
+        ? new Date(r.ts).toLocaleString(undefined, { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })
+        : "—";
+      const pct = Math.min(100, Math.max(0, r.reduction_pct || 0));
+
+      return `<tr>
+        <td class="filename-cell" title="${r.filename || ""}">${name}</td>
+        <td><span class="badge ${badgeCls(r.file_type)}">${(r.file_type || "?").toUpperCase()}</span></td>
+        <td class="r">${(r.pages || 1)}</td>
+        <td class="r">${fmtFull(r.mcp_tokens)}</td>
+        <td class="r">${fmtFull(r.direct_tokens)}</td>
+        <td class="r" style="color:#059669;font-weight:600;">${fmtFull(r.saved_tokens)}</td>
+        <td style="min-width:130px;">
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <span class="bar-pct">${(r.reduction_pct || 0).toFixed(1)}%</span>
+          </div>
+        </td>
+        <td style="color:#94a3b8;font-size:11.5px;">${when}</td>
+      </tr>`;
+    }).join("");
+
+    el.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>File</th>
+          <th>Type</th>
+          <th class="r">Pages</th>
+          <th class="r">MCP Tokens</th>
+          <th class="r">Direct Estimate</th>
+          <th class="r">Saved</th>
+          <th>Reduction</th>
+          <th>Time</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Load & render ─────────────────────────────────────────────────────────
+  async function loadData(manual = false) {
+    const btn = document.getElementById("refresh-btn");
+    const dot = document.getElementById("status-dot");
+    const txt = document.getElementById("status-text");
+    const err = document.getElementById("error-banner");
+
+    if (manual) {
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="animation:spin .7s linear infinite"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.8-3.3M20.5 15A9 9 0 0 1 5.7 18.3"/></svg> Loading…`;
+    }
+
+    try {
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+
+      renderCards(data.summary);
+      renderTimeline(data.over_time || []);
+      renderTypeChart(data.by_type || []);
+      renderTable(data.recent || [], data.summary.total_conversions || 0);
+
+      dot.className = "dot live";
+      txt.textContent = "Live";
+      err.className = "error-banner";
+
+      document.getElementById("footer").innerHTML =
+        `Last updated <strong>${new Date().toLocaleTimeString()}</strong> &nbsp;·&nbsp; Auto-refreshes every 30 s &nbsp;·&nbsp; Dashboard served by md-converter-mcp on port 3847`;
+
+    } catch (e) {
+      dot.className = "dot offline";
+      txt.textContent = "Offline";
+      err.className = "error-banner show";
+      err.textContent = `Cannot reach ${API_URL} — is md-converter-mcp running? Start it with: node server.js`;
+      document.getElementById("footer").textContent = "Connection failed — retrying in 30 s";
+    } finally {
+      if (manual) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0 1 14.8-3.3M20.5 15A9 9 0 0 1 5.7 18.3"/></svg> Refresh`;
+      }
+    }
+  }
+
+  // ── Spin animation ────────────────────────────────────────────────────────
+  const style = document.createElement("style");
+  style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  loadData(true);
+  setInterval(() => loadData(false), 30_000);
+</script>
+
+</body>
+</html>

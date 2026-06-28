@@ -5,3 +5,7 @@ npm-debug.log*
 .env
 .env.*
 Thumbs.db
+
+# Local token savings database (user-specific, not for version control)
+conversions.jsonl
+conversions.db
